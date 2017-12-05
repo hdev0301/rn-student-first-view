@@ -1,0 +1,129 @@
+
+fastlane_version "2.46.1"
+
+platform :ios do
+  before_all do
+    ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+    @username = "iphone@utrack.com"
+    @team_name = "Firstgroup America Inc"
+    @codesigning_identity = "iPhone Distribution: Firstgroup America Inc (9BD6VT39FR)"
+  end
+
+  def build_ios_app
+    if @codesigning_identity.to_s == ""
+      match(
+        type: "appstore",
+        team_name: @team_name
+      )
+      gym(
+        clean: true,
+        scheme: "FirstView",
+        workspace: "./ios/FirstView.xcworkspace"
+      )
+    else
+      gym(
+        clean: true,
+        scheme: "FirstView",
+        workspace: "./ios/FirstView.xcworkspace",
+        codesigning_identity: @codesigning_identity
+      )
+    end
+  end
+
+  desc "Build IPA file"
+  lane :build do
+    build_ios_app
+  end
+
+  desc "Submit a new Build to Apple TestFlight"
+  lane :deploy do
+    answer = UI.select("Would you like to add a Changelog?", ["Yes", "No"])
+    changelog = ask('Type Changelog message:') if answer == "Yes"
+
+    build_ios_app
+
+    if changelog
+      pilot(
+        skip_waiting_for_build_processing: true,
+        username: @username,
+        team_name: @team_name
+      )
+    else
+      pilot(
+        skip_waiting_for_build_processing: true,
+        username: @username,
+        team_name: @team_name,
+        changelog: changelog
+      )
+    end
+
+    sh "fastlane pilot list -u #{@username}"
+
+    slack(
+      message: "App successfully released",
+      channel: "first-student"
+    )
+  end
+
+  desc "Submit IPA to Crashlytics Beta"
+  lane :beta do
+    crashlytics(ipa_path: "FirstView.ipa",
+                api_token: ENV['FABRIC_API_TOKEN'],
+                build_secret: ENV['FABRIC_BUILD_SECRET'])
+  end
+end
+
+platform :android do
+  before_all do
+    ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+  end
+
+  def build_android_app
+    gradle(
+      task: "clean",
+      project_dir: "android/"
+    )
+
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      project_dir: "android/"
+    )
+  end
+
+  desc "Build APK file"
+  lane :build do
+    build_android_app
+  end
+
+  desc "Submit a new Build to Google Play Store"
+  lane :deploy do
+    build_android_app
+
+    supply(
+      track: "alpha",
+      apk: "android/app/build/outputs/apk/app-release.apk",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+
+    slack(
+      message: "App successfully released",
+      channel: "first-student"
+    )
+  end
+
+  desc "Submit APK to Crashlytics Beta"
+  lane :beta do
+    crashlytics(apk_path: "android/app/build/outputs/apk/app-release.apk",
+                api_token: ENV['FABRIC_API_TOKEN'],
+                build_secret: ENV['FABRIC_BUILD_SECRET'])
+  end
+end
+
+# More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/docs/Platforms.md
+# All available actions: https://github.com/fastlane/fastlane/blob/master/fastlane/docs/Actions.md
+
+# fastlane reports which actions are used
+# No personal data is recorded. Learn more at https://github.com/fastlane/enhancer

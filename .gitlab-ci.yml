@@ -1,0 +1,32 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+- build
+
+variables:
+  CONTAINER_TEST_IMAGE: commutable/android-sdk
+
+before_script:
+<<<<<<< HEAD
+  - docker login -u tks111 -p whoareyou111
+  - chomod +x ./gradlew
+=======
+  - chmod +x android/gradlew
+>>>>>>> origin/master
+
+build:
+  stage: build
+  script:
+    - docker build --pull -t $CONTAINER_TEST_IMAGE .
+<<<<<<< HEAD
+    - docker push tks111/android_sdk:latest
+    - ./gradlew assembleDebug
+  artifacts:
+  	paths:
+  		- app/build/outputs/
+=======
+    - docker push commutable/android-sdk:latest
+>>>>>>> origin/master

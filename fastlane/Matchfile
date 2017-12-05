@@ -1,0 +1,6 @@
+git_url "git@gitlab.commutable.com:first/fastlane-certificates.git"
+git_branch "utrack"
+
+type "appstore"
+app_identifier "com.firststudentinc.firstview"
+username "iphone@utrack.com"

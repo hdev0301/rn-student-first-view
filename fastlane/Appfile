@@ -1,0 +1,7 @@
+# iOS
+app_identifier "com.firststudentinc.firstview"
+apple_id "iphone@utrack.com"
+
+# Android
+json_key_file "./android/keystores/google-play-api-secret.json"
+package_name "com.firststudentinc.firstview"
